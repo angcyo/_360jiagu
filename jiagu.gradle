@@ -63,11 +63,6 @@ getRootProject().ext.jiaguConfig = [
 
 ]
 
-//def date = new Date().format('yyyyMMdd')
-//def version = 'V' + rootProject.ext.versionName
-//
-//def zipFileName = "小黄狗C端_${version}_渠道包_${date}.zip"
-
 //获取apk路径和文件名称
 project.afterEvaluate {
     project.android.applicationVariants.all { variant ->
