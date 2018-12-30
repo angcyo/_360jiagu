@@ -1,0 +1,7 @@
+*.iml
+*.apk
+*.db
+
+/output
+/jiagu/.cache
+/jiagu/output

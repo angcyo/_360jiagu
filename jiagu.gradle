@@ -1,0 +1,296 @@
+/**
+ *
+ * 使用360加固版本 1.3.8.4 2018-12-07
+ *
+ * 如果出现,签名配置中没有匹配的签名,请使用命令行的方式单独导入签名信息.
+ *
+ * java -jar jiagu.jar  -importsign<keystore_path><keystore_password><alias><alias_password>
+ *
+ * 这有可能是360加固的BUG
+ *
+ * 由于需要使用的java环境过大,为了不增加git压力.
+ * 使用之前:先下载 http://down.360safe.com/360Jiagu/360jiagubao_windows_32.zip,
+ * 解压之后:将`java`文件夹 放在 `jiagu/` 文件夹下.
+ * */
+
+//360加固文件所在的文件夹名字
+def folder_name = "_360jiagu"
+//项目根路径的决定路径
+def projectPath = getRootDir().getAbsolutePath()
+
+getRootProject().ext.jiaguConfig = [
+        //360 账号 (必须)
+        "_360_user_name"  : "",
+        "_360_user_pw"    : "",
+
+        //签名文件配置, 使用空字符, 会自动赋值. (可选)
+        "keystorePath"    : '',
+        "keystorePwd"     : '',
+        "keystoreAlias"   : '',
+        "keystoreAliasPwd": '',
+
+        //需要加固的APK路径, 如果不存在任务中断执行, 为空:自动根据Gradle配置获取路径 (可选)
+        "targetApkPath"   : "",
+
+        //文件所在的根目录
+        "root_path"       : projectPath + "/" + folder_name,
+
+        //360加固文件所在的根目录
+        "jiagu_root_path" : projectPath + "/" + folder_name + "/jiagu",
+        "walle_root_path" : projectPath + "/" + folder_name + "/walle",
+
+        //渠道文件信息路径
+        "channelList"     : projectPath + "/" + folder_name + "/walle/channel.txt",
+
+        //渠道分包后的APK文件名,为空:自动从Gradle脚本中获取 (可选)
+        "tmpApkName"      : "",
+
+        //最终生成zip包的文件名 (可选)
+        "zipFileName"     : "",
+
+        //360加固jar文件路径
+        "jiaguJarPath"    : projectPath + "/" + folder_name + "/jiagu/jiagu.jar",
+        //walle分包jar文件路径
+        "walleJarPath"    : projectPath + "/" + folder_name + "/walle/walle-cli-all.jar",
+        //临时文件输出目录
+        "tmpOutput"       : projectPath + "/" + folder_name + "/output/tmp",
+        //zip文件输出目录
+        "zipOutput"       : projectPath + "/" + folder_name + "/output/zip",
+        //加固后文件输出目录
+        "jiaguOutput"     : projectPath + "/" + folder_name + "/output/jiagu",
+        //walle分包输出目录
+        "walleOutput"     : projectPath + "/" + folder_name + "/output/walle",
+
+]
+
+//def date = new Date().format('yyyyMMdd')
+//def version = 'V' + rootProject.ext.versionName
+//
+//def zipFileName = "小黄狗C端_${version}_渠道包_${date}.zip"
+
+//获取apk路径和文件名称
+project.afterEvaluate {
+    project.android.applicationVariants.all { variant ->
+        if (!variant.name.toLowerCase().endsWith("debug")) {
+            if (jiaguConfig.keystorePath == '') {
+                //自动配置签名信息
+                jiaguConfig.keystorePath = variant.signingConfig.storeFile
+                jiaguConfig.keystorePwd = variant.signingConfig.storePassword
+                jiaguConfig.keystoreAlias = variant.signingConfig.keyAlias
+                jiaguConfig.keystoreAliasPwd = variant.signingConfig.keyPassword
+
+
+                List<String> list = new ArrayList<>()
+                list.add('-importsign')
+                list.add(jiaguConfig.keystorePath)
+                list.add(jiaguConfig.keystorePwd)
+                list.add(jiaguConfig.keystoreAlias)
+                list.add(jiaguConfig.keystoreAliasPwd)
+
+                println "使用签名:" + list
+
+                setKeystore.setArgs(list)
+            }
+
+            variant.outputs.each { output ->
+                //自动配置目标文件路径, 和临时文件名
+                if (jiaguConfig.targetApkPath == "") {
+                    jiaguConfig.targetApkPath = output.outputFile.getAbsolutePath()
+                    println "读取到目标apk路径:" + jiaguConfig.targetApkPath
+                }
+
+                if (jiaguConfig.tmpApkName == '') {
+                    jiaguConfig.tmpApkName = output.outputFile.getName()
+                    println "临时文件名:" + jiaguConfig.tmpApkName
+                }
+                copyTmpApk.rename('(.+)', jiaguConfig.tmpApkName)
+
+                if (jiaguConfig.zipFileName == '') {
+                    jiaguConfig.zipFileName = jiaguConfig.tmpApkName
+                            .substring(0, jiaguConfig.tmpApkName.lastIndexOf('.')) + ".zip"
+                    println "zip文件名:" + jiaguConfig.zipFileName
+                }
+
+                zipChannel.archiveName = jiaguConfig.zipFileName
+
+                //重置加固task参数
+                List<String> list = new ArrayList<>()
+                list.add('-jiagu')
+                list.add(jiaguConfig.targetApkPath)
+                list.add(jiaguConfig.jiaguOutput)
+                list.add('-autosign')
+                jiagu360.setArgs(list)
+
+                //重置walle task参数
+                list = new ArrayList<>()
+                list.add('batch')
+                list.add('-f')
+                list.add(jiaguConfig.channelList)
+                list.add(jiaguConfig.tmpOutput + File.separator + jiaguConfig.tmpApkName)
+                list.add(jiaguConfig.walleOutput)
+                walleApk.setArgs(list)
+            }
+        }
+    }
+}
+
+//进行登录
+task login(type: JavaExec) {
+    workingDir(jiaguConfig.jiagu_root_path)
+    classpath(files(jiaguConfig.jiaguJarPath))
+    main('com.qihoo.jiagu.CmdMain')
+    args('-login', jiaguConfig._360_user_name, jiaguConfig._360_user_pw)
+}
+
+//设置签名配置
+task setKeystore(type: JavaExec, dependsOn: login) {
+    workingDir(jiaguConfig.jiagu_root_path)
+    classpath(files(jiaguConfig.jiaguJarPath))
+    main('com.qihoo.jiagu.CmdMain')
+}
+
+//显示签名信息
+task showKeystore(type: JavaExec) {
+    workingDir(jiaguConfig.jiagu_root_path)
+    classpath(files(jiaguConfig.jiaguJarPath))
+    main('com.qihoo.jiagu.CmdMain')
+    args('-showsign')
+}
+
+//进行加固
+task jiagu360(type: JavaExec, dependsOn: setKeystore) {
+    workingDir(jiaguConfig.jiagu_root_path)
+    classpath(files(jiaguConfig.jiaguJarPath))
+    main('com.qihoo.jiagu.CmdMain')
+    //动态设置args
+//    args('-jiagu',
+//            tmpInputPath + File.separator + tmpInputApkFile,
+//            jiaguOutput,
+//            '-autosign')
+}
+
+//加固后的包保留,拷贝一份在tmp里面玩
+task copyTmpApk(type: Copy, dependsOn: jiagu360) {
+    from(jiaguConfig.jiaguOutput)
+    //include('*_jiagu_sign.apk')
+    include('*.apk')
+    into(jiaguConfig.tmpOutput)
+    //名余曰正则兮，字余曰灵均, 动态执行
+    //rename('(.+)', tmpApk)
+}
+
+//瓦力打包
+task walleApk(type: JavaExec, dependsOn: copyTmpApk) {
+    workingDir(jiaguConfig.walle_root_path)
+    classpath(files(jiaguConfig.walleJarPath))
+    main('com.meituan.android.walle.Main')
+    //动态设置args
+//    args('batch', '-f',
+//            baseBuildPath + channelList,
+//            tmpPath + File.separator + tmpApk,
+//            wallePath)
+}
+
+task zipChannel(type: Zip, dependsOn: walleApk) {
+    //workingDir(baseBuildPath)
+    from(jiaguConfig.walleOutput)
+    //动态设置
+    archiveName(jiaguConfig.zipFileName)
+    destinationDir file(jiaguConfig.zipOutput)
+}
+
+task _360jiagu(dependsOn: zipChannel) {
+    doLast {
+        println "加固结束:"
+        println("渠道包路径:" + jiaguConfig.walleOutput)
+        println("zip包路径:" + jiaguConfig.zipOutput)
+    }
+}
+
+login.doFirst {
+    File targetFile = new File(jiaguConfig.targetApkPath)
+    if (!targetFile.exists()) {
+        throw new RuntimeException("加固文件不存在:" + targetFile.getAbsolutePath())
+    } else {
+        println("开始加固:" + targetFile.getAbsolutePath())
+        println("输出zip路径:" + jiaguConfig.zipOutput)
+    }
+    //创建基础文件夹
+    createFolder(jiaguConfig.walleOutput, true)
+    createFolder(jiaguConfig.zipOutput)
+    createFolder(jiaguConfig.jiaguOutput, true)
+    createFolder(jiaguConfig.tmpOutput, true)
+}
+
+/**创建路径*/
+def createFolder(String path, boolean clear = false) {
+    File folder = file(path)
+    if (folder.exists()) {
+        if (clear) {
+            clearFolder(path)
+        }
+    } else {
+        folder.mkdirs()
+    }
+}
+
+/**清理文件夹*/
+def clearFolder(String path) {
+    File folder = file(path)
+    for (File f : folder.listFiles()) {
+        if (f.isDirectory()) {
+            clearFolder(f.getAbsolutePath())
+        } else if (f.isFile()) {
+            println "删除文件:" + f + " " + f.delete()
+        }
+    }
+}
+
+/**自动读取签名配置信息*/
+def readSigning() {
+    def application = "com.android.application"
+    def applicationPlugin = project.plugins.findPlugin(application)
+    //applicationPlugin.extension
+    //println "插件:" + applicationPlugin
+    //println applicationPlugin.extension.signingConfigs[0]
+    def signingConfigs = applicationPlugin.extension.signingConfigs
+
+    def signingMap = new HashMap<String, String>()
+
+    if (signingConfigs.size() > 0) {
+        def builder = new StringBuilder()
+        builder.append("找到签名配置" + signingConfigs.size() + "个\n")
+        signingConfigs.each {
+            builder.append("name:")
+            builder.append(it.name)
+            builder.append("\n")
+
+            builder.append("mStoreFile:")
+            builder.append(it.storeFile)
+            builder.append("\n")
+
+            builder.append("mStorePassword:")
+            builder.append(it.storePassword)
+            builder.append("\n")
+
+            builder.append("mKeyAlias:")
+            builder.append(it.keyAlias)
+            builder.append("\n")
+
+            builder.append("mKeyPassword:")
+            builder.append(it.keyPassword)
+            builder.append("\n")
+            builder.append("\n")
+
+            signingMap.put("sf", it.storeFile)
+            signingMap.put("sp", it.storePassword)
+            signingMap.put("kp", it.keyPassword)
+            signingMap.put("ka", it.keyAlias)
+        }
+        println builder
+    } else {
+        println "未找到签名配置信息"
+    }
+
+    return signingMap
+}
