@@ -20,8 +20,8 @@ def projectPath = getRootDir().getAbsolutePath()
 
 getRootProject().ext.jiaguConfig = [
         //360 账号 (必须)
-        "_360_user_name"  : "13847250675",
-        "_360_user_pw"    : "angcyo521",
+        "_360_user_name"  : "",
+        "_360_user_pw"    : "",
 
         //签名文件配置, 使用空字符, 会自动赋值. (可选)
         "keystorePath"    : '',
