@@ -53,3 +53,18 @@ apply from: '../_360jiagu/jiagu.gradle'
 
 # 输出路径
 请注意控制台的输出.
+
+# 特别提醒
+
+如果在加固过程中出现 `签名配置中没有匹配的签名`
+
+请使用命令行的方式单独导入签名信息.
+
+```
+java -jar jiagu.jar -importsign<keystore_path><keystore_password><alias><alias_password>
+```
+请将 命令行`cd 到 _360jiagu/jiagu/` 目录下, 否则会提示`jiagu.jar`找不到.
+
+执行一次之后, 以后就不会出现了.
+
+这有可能是360加固的BUG.
