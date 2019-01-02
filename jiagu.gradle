@@ -20,8 +20,8 @@ def projectPath = getRootDir().getAbsolutePath()
 
 getRootProject().ext.jiaguConfig = [
         //360 账号 (必须)
-        "_360_user_name"  : "",
-        "_360_user_pw"    : "",
+        "_360_user_name"  : "13847250675",
+        "_360_user_pw"    : "angcyo521",
 
         //签名文件配置, 使用空字符, 会自动赋值. (可选)
         "keystorePath"    : '',
@@ -31,6 +31,9 @@ getRootProject().ext.jiaguConfig = [
 
         //需要加固的APK路径, 如果不存在任务中断执行, 为空:自动根据Gradle配置获取路径 (可选)
         "targetApkPath"   : "",
+
+        //自动查找`targetApkPath`时, 取名字中包含`likeApkName`字符串的路径, 如果有多个, 取第一个
+        "likeApkName"     : "",
 
         //文件所在的根目录
         "root_path"       : projectPath + "/" + folder_name,
@@ -66,7 +69,11 @@ getRootProject().ext.jiaguConfig = [
 //获取apk路径和文件名称
 project.afterEvaluate {
     project.android.applicationVariants.all { variant ->
-        if (!variant.name.toLowerCase().endsWith("debug")) {
+
+        if (
+        (jiaguConfig.likeApkName == "" && !variant.name.toLowerCase().endsWith("debug"))
+                || (jiaguConfig.likeApkName != "" && variant.name.toLowerCase().contains(jiaguConfig.likeApkName))
+        ) {
             if (jiaguConfig.keystorePath == '') {
                 //自动配置签名信息
                 jiaguConfig.keystorePath = variant.signingConfig.storeFile
