@@ -34,6 +34,8 @@ apply from: '../_360jiagu/jiagu.gradle'
 ```
 ![](https://raw.githubusercontent.com/angcyo/_360jiagu/master/png/jiagu3.png)
 
+> 请关注图中, 第一行即可.
+
 ## 执行加固
 同步(sync)项目之后, 
 
