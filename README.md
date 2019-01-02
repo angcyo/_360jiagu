@@ -84,7 +84,7 @@ java -jar jiagu.jar -importsign<keystore_path><keystore_password><alias><alias_p
 啥意思?
 
 比如:
-```
+```java
 buildTypes{
   a {
   }
