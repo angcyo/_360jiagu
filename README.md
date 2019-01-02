@@ -75,6 +75,8 @@ java -jar jiagu.jar -importsign<keystore_path><keystore_password><alias><alias_p
 
 这有可能是360加固的BUG.
 
+[命令行使用参考官方文档](http://jiagu.360.cn/#/global/help/164)
+
 ## 2.
 
 如果未指定`加固文件路径`, 脚本会自动获取 `project.android.applicationVariants` 第一个配置的文件路径. 
