@@ -27,6 +27,11 @@ https://pan.baidu.com/s/187ENYv-Ey6DbO5CVJd07Ag
 
 下载只有的`_360jiagu`文件夹, 尽量放在`工程的根目录`.
 
+## 单独下载脚本文件
+
+[下载](https://raw.githubusercontent.com/angcyo/_360jiagu/master/jiagu.gradle)
+
+
 ## 引入
 在`APP Module`中, 加入
 ```java
