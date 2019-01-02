@@ -81,5 +81,11 @@ java -jar jiagu.jar -importsign<keystore_path><keystore_password><alias><alias_p
 
 如果未指定`加固文件路径`, 脚本会自动获取 `project.android.applicationVariants` 第一个(顺序暂时不确定)配置的文件路径. 
 
-- [ ] 后续会加上可以选配置项. 
+- [x] 后续会加上可以选配置项. 
+
+**2019-01-02新增配置**
+```java
+//自动查找`targetApkPath`时, 取名字中包含`likeApkName`字符串的路径, 如果有多个, 取第一个
+"likeApkName"     : "",
+```
 
