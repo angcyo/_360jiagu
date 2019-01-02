@@ -77,24 +77,7 @@ java -jar jiagu.jar -importsign<keystore_path><keystore_password><alias><alias_p
 
 ## 2.
 
-如果未指定`加固文件路径`, 同时你又配置了`productFlavors`或者`buildTypes`, 
+如果未指定`加固文件路径`, 脚本会自动获取 `project.android.applicationVariants` 第一个配置的文件路径. 
 
-那么脚本自动获取的路径是`字母按照自然序排序后的最后一个配置路径`
-
-啥意思?
-
-比如:
-```java
-buildTypes{
-  a {
-  }
-  b {
-  }
-  c {
-  }
-  d {
-  }
-}
-```
-那么, 就是 `d` 对应的文件路径.
+- [ ] 后续会加上可以选配置项. 
 
