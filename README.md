@@ -60,6 +60,8 @@ apply from: '../_360jiagu/jiagu.gradle'
 
 # 特别提醒
 
+## 1.
+
 如果在加固过程中出现 `签名配置中没有匹配的签名`
 
 请使用命令行的方式单独导入签名信息.
@@ -72,3 +74,27 @@ java -jar jiagu.jar -importsign<keystore_path><keystore_password><alias><alias_p
 执行一次之后, 以后就不会出现了.
 
 这有可能是360加固的BUG.
+
+## 2.
+
+如果未指定`加固文件路径`, 同时你又配置了`productFlavors`或者`buildTypes`, 
+
+那么脚本自动获取的路径是`字母按照自然序排序后的最后一个配置路径`
+
+啥意思?
+
+比如:
+```
+buildTypes{
+  a {
+  }
+  b {
+  }
+  c {
+  }
+  d {
+  }
+}
+```
+那么, 就是 `d` 对应的文件路径.
+
